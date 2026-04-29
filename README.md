@@ -14,7 +14,7 @@ It ships with reference implementations of the algorithms from *Practical and Ac
 go get github.com/WildAlg/dpgraph
 ```
 
-Requires Go 1.21+.
+Requires Go 1.25+.
 
 ## 60-second quickstart
 
