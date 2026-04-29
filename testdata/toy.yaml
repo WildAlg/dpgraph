@@ -1,0 +1,13 @@
+graph: toy_10node
+graph_size: 10
+algo_name: kcoreLDP
+num_workers: 2
+epsilon: 1.0
+phi: 0.5
+factor: 0.8
+bias: false
+bias_factor: 1
+noise: false
+runs: 1
+output_file_tag: smoke
+graph_loc: testdata

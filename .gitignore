@@ -1,0 +1,27 @@
+# Binaries
+/dpgraph
+/cmd/dpgraph/dpgraph
+*.exe
+*.out
+
+# Test artifacts
+*.txt.tmp
+coverage.out
+
+# Editor / OS
+.DS_Store
+.idea/
+.vscode/
+
+# Result files matching the legacy output schema
+*_partitioned_*/
+*_kcoreLDP_*.txt
+*_kcoreCDP_*.txt
+*_triangle_countingLDP_*.txt
+*_triangle_countingCDP_*.txt
+*_rr-kcore_*.txt
+*_rr-tcount_*.txt
+
+# Go workspace files
+go.work
+go.work.sum
