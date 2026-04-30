@@ -140,7 +140,25 @@ Output files use the legacy filename schema so existing analysis scripts (`get_r
 
 ## Citing & paper
 
-If you use `dpgraph` in research, please cite the originating paper. The parent repository contains the full PDF and Zenodo DOI: https://doi.org/10.5281/zenodo.15741879.
+If you use `dpgraph` in research, please cite the originating paper.
+```
+@article{10.14778/3749646.3749687,
+author = {Mundra, Pranay and Papamanthou, Charalampos and Shun, Julian and Liu, Quanquan C.},
+title = {Practical and Accurate Local Edge Differentially Private Graph Algorithms},
+year = {2025},
+issue_date = {July 2025},
+publisher = {VLDB Endowment},
+volume = {18},
+number = {11},
+issn = {2150-8097},
+url = {https://doi.org/10.14778/3749646.3749687},
+doi = {10.14778/3749646.3749687},
+journal = {Proc. VLDB Endow.},
+month = jul,
+pages = {4199–4213},
+numpages = {15}
+}
+```
 
 ## Contributing
 
