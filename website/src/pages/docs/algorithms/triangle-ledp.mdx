@@ -1,0 +1,75 @@
+---
+layout: ../../../layouts/Doc.astro
+title: Triangle counting LEDP
+description: EdgeOrient — local-edge DP triangle counting via low-out-degree orientation. Up to six orders of magnitude lower error than prior LDP methods.
+section: Algorithms
+---
+
+import EdgeOrientAnimation from "../../../components/animations/EdgeOrientAnimation.tsx";
+
+# Triangle counting <span class="badge badge-accent">LEDP</span>
+
+`EdgeOrient` — the paper's LEDP triangle-counting algorithm. It composes a `kcoreLDP` pass, an edge-randomized-response pass, a max-out-degree estimation pass, and a final triangle enumeration with Laplace noise. The big idea: orient edges along a *low-out-degree* ordering produced by k-CoreD so each node's enumeration cost — and noise sensitivity — depends on the graph's degeneracy, not its edge count.
+
+**Package** [`github.com/WildAlg/dpgraph/algos/tcountldp`](https://pkg.go.dev/github.com/WildAlg/dpgraph/algos/tcountldp) · **Registered name** `triangle_countingLDP`
+
+## Threat model
+
+ε-LEDP via composition. Each of the four sub-steps consumes ε/4 of the privacy budget. The composition theorem (Theorem 2.14 in the paper) bounds the total at ε.
+
+| Phase | Mechanism | Budget |
+| --- | --- | --- |
+| 1. k-core LDS | Geometric (per-round, per-user) | ε / 4 |
+| 2. Edge-RR | Randomized response on upper-triangular adjacency | ε / 4 |
+| 3. Max out-degree | Geometric on local out-degree | ε / 4 |
+| 4. Count triangles | Laplace, sensitivity 2·D̃ₘₐₓ | ε / 4 |
+
+## How it works
+
+<EdgeOrientAnimation client:visible />
+
+1. **k-core LDS.** A `kcoreLDP` pass settles a level for every node. Edges will be oriented from lower level to higher level — a low-out-degree orientation by Lemma 4.3.
+2. **Randomized response.** Each worker flips each edge bit in its upper-triangular slice with probability `1/(eᵉ+1)`. The resulting noisy adjacency is published as `X`.
+3. **Max out-degree.** Each worker reports the max `|out(v)| + Geom(ε)` over its shard; the coordinator publishes the global maximum `D̃ₘₐₓ`.
+4. **Count triangles.** For each node `v`, each pair of out-neighbours `(j, k)` with the right orientation contributes the unbiased estimator `(X[j,k]·(eᵉ+1) − 1) / (eᵉ − 1)` to the local triangle count. Add `Lap(ε / (2·D̃ₘₐₓ))` for sensitivity. Sum across workers.
+
+### Why this beats prior LDP triangle counting
+
+Prior work (Imola–Murakami–Chaudhury) bounded standard deviation by `O(n^{3/2}/ε^2)`, scaling with all `O(n^2)` candidate edges. EdgeOrient bounds it by `O(√(n d²)/ε^2)` where `d` is the degeneracy — typically polylog or constant for the social-network and citation graphs that motivate this work. On real datasets the multiplicative error reduction reaches **six orders of magnitude**.
+
+## Run it
+
+```bash
+go run ./cmd/dpgraph -config_file experiments/configs/cit-Patents-tcountLDP.yaml \
+                     -workers 8 -link_mbps 1000 -rtt_ms 0.5 -seed 42
+```
+
+```go
+cfg := sim.Config{
+    Graph:      "toy",
+    GraphPath:  "testdata/toy_10node_adj",
+    GraphSize:  10,
+    AlgoName:   "triangle_countingLDP",
+    NumWorkers: 4,
+    Epsilon:    1.0,
+    Phi:        0.5,
+    Factor:     0.8,
+    Bias:       true,
+    Noise:      true,
+    Seed:       42,
+    Latency:    sim.BandwidthRTT{LinkSpeedBitsPerSec: 25e6, BaseRTT: time.Millisecond},
+}
+algo.Run(cfg)
+```
+
+## Memory & communication
+
+Workers process `S = ⌈n / M⌉` nodes each, requiring `O(Sn)` space for the graph, `O(Sn)` for the `neighborsRR` structure, and `O(S · D̃ₘₐₓ)` for triangle enumeration. The coordinator stores the noisy adjacency `cRR` (`O(n²)` space) plus aggregator scratch (`O(M)`). Total worker memory is `O(Sn)`; total coordinator memory is `O(n² + M)`. Three communication rounds beyond the k-core LDS rounds.
+
+## API
+
+`tcountldp` composes with `kcoreldp` — it reads `kcoreldp.Algo`'s post-`Setup` exported fields (`LDS`, `LevelsPerGroup`, …) directly. See [the godoc](https://pkg.go.dev/github.com/WildAlg/dpgraph/algos/tcountldp).
+
+## Citation
+
+*Practical and Accurate Local Edge Differentially Private Graph Algorithms*, §4 (Algorithm 4.1, "EdgeOrient"). [Proc. VLDB Endow. 18(11), 2025](https://doi.org/10.14778/3749646.3749687) · [arXiv 2506.20828](https://arxiv.org/abs/2506.20828).

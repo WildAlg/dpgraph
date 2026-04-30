@@ -1,0 +1,53 @@
+---
+layout: ../../../layouts/Doc.astro
+title: k-core CDP
+description: Central-DP k-core decomposition — trusted-curator counterpart to k-core LEDP, useful as an upper bound on accuracy.
+section: Algorithms
+---
+
+# k-core decomposition <span class="badge">CDP</span>
+
+The central-DP counterpart to `kcoreLDP`. Every vertex's noisy neighbour count is computed by a single trusted aggregator that sees the full graph; correspondingly the algorithm runs as one logical worker.
+
+**Package** [`github.com/WildAlg/dpgraph/algos/kcorecdp`](https://pkg.go.dev/github.com/WildAlg/dpgraph/algos/kcorecdp) · **Registered name** `kcoreCDP`
+
+## Threat model
+
+The curator is **trusted** and observes the entire adjacency list. ε-DP guarantees apply to released artifacts (the LDS levels and resulting core numbers), not to inputs. This algorithm is included primarily as an accuracy upper bound — what's possible if you accept a trusted aggregator.
+
+## How it works
+
+The structure mirrors `kcoreLDP` (degree thresholding → multi-round level moving → core-number estimation), but every noisy decision happens centrally with a single budget. There is no `RR`, no per-user randomizer, and no privacy cost from publishing the LDS between rounds (it's already a deterministic function of central state).
+
+In framework terms, `kcoreCDP` runs as a single worker (`NumWorkers = 1`) so `RunRound` is called with a single `WorkerFn` per super-step, and `SimulateSend` is essentially a no-op — there is no real network in this threat model, so reported network metrics are zero.
+
+## Run it
+
+```bash
+go run ./cmd/dpgraph -config_file experiments/configs/cit-Patents-kcoreCDP.yaml \
+                     -seed 42
+```
+
+```go
+cfg := sim.Config{
+    Graph:      "toy",
+    GraphPath:  "testdata/toy_10node_adj",
+    GraphSize:  10,
+    AlgoName:   "kcoreCDP",
+    NumWorkers: 1,
+    Epsilon:    1.0,
+    Phi:        0.5,
+    Factor:     0.8,
+    Noise:      true,
+    Seed:       42,
+}
+algo.Run(cfg)
+```
+
+## API
+
+`kcorecdp` reuses the LDS and per-vertex state of `kcoreldp` via `algos/internal/kcorecore`. See [the godoc](https://pkg.go.dev/github.com/WildAlg/dpgraph/algos/kcorecdp).
+
+## Citation
+
+The CDP variant follows the same algorithmic outline as Algorithm 3.1 of *[Practical and Accurate Local Edge Differentially Private Graph Algorithms](https://doi.org/10.14778/3749646.3749687)* (Proc. VLDB Endow. 18(11), 2025), with budgets folded into a single trusted-curator pass.

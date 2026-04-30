@@ -1,0 +1,240 @@
+@import "@fontsource/jetbrains-mono/400.css";
+@import "@fontsource/jetbrains-mono/500.css";
+
+@import "katex/dist/katex.min.css";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --bg: #FAF9F6;
+    --fg: #0E0E10;
+    --muted: #595964;
+    --rule: #d8d6cf;
+    --accent: #1E3A8A;
+    --accent-soft: #3b58a8;
+    --noise: #E25822;
+    --code-bg: #f1efe8;
+  }
+
+  .dark {
+    --bg: #0E0E10;
+    --fg: #F5F4F0;
+    --muted: #9b9aa3;
+    --rule: #26262b;
+    --accent: #6f86c9;
+    --accent-soft: #8198d5;
+    --noise: #f3905f;
+    --code-bg: #17171a;
+  }
+
+  html {
+    background: var(--bg);
+    color: var(--fg);
+    font-family: theme("fontFamily.sans");
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--fg);
+    font-size: 17px;
+    line-height: 1.7;
+  }
+
+  ::selection {
+    background: var(--accent);
+    color: #fff;
+  }
+
+  hr {
+    border: 0;
+    border-top: 1px solid var(--rule);
+  }
+
+  a {
+    color: var(--accent);
+    text-decoration: none;
+    text-underline-offset: 3px;
+    text-decoration-thickness: 1px;
+  }
+  a:hover {
+    text-decoration: underline;
+  }
+
+  code {
+    font-family: theme("fontFamily.mono");
+    font-size: 0.92em;
+  }
+
+  pre {
+    font-family: theme("fontFamily.mono");
+    border: 1px solid var(--rule);
+    background: var(--code-bg) !important;
+    padding: 1rem 1.1rem;
+    border-radius: 4px;
+    overflow-x: auto;
+    font-size: 0.86em;
+    line-height: 1.6;
+  }
+
+  pre code {
+    background: transparent !important;
+    font-size: inherit;
+  }
+
+  /* shiki light/dark sync with our theme toggle */
+  .dark .astro-code,
+  .dark .astro-code span {
+    color: var(--shiki-dark) !important;
+    background-color: var(--code-bg) !important;
+    font-style: var(--shiki-dark-font-style) !important;
+    font-weight: var(--shiki-dark-font-weight) !important;
+    text-decoration: var(--shiki-dark-text-decoration) !important;
+  }
+}
+
+@layer components {
+  .container-prose {
+    @apply mx-auto max-w-prose px-5 sm:px-6;
+  }
+  .container-wide {
+    @apply mx-auto max-w-wide px-5 sm:px-8;
+  }
+  .hairline {
+    border-color: var(--rule);
+  }
+  .display {
+    font-family: theme("fontFamily.display");
+    font-weight: 700;
+    letter-spacing: -0.022em;
+  }
+  .small-caps {
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    font-size: 0.72rem;
+    font-weight: 500;
+    color: var(--muted);
+  }
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 8px;
+    border: 1px solid var(--rule);
+    border-radius: 999px;
+    font-family: theme("fontFamily.mono");
+    font-size: 0.68rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .badge-accent {
+    color: var(--accent);
+    border-color: color-mix(in srgb, var(--accent) 35%, transparent);
+  }
+  .badge-noise {
+    color: var(--noise);
+    border-color: color-mix(in srgb, var(--noise) 35%, transparent);
+  }
+  .prose-paper {
+    /* prose pages — refined research-paper feel */
+  }
+  .prose-paper h1 {
+    @apply display text-display-2 mt-2 mb-6;
+  }
+  .prose-paper h2 {
+    @apply display text-h2 mt-14 mb-3;
+    font-weight: 600;
+  }
+  .prose-paper h3 {
+    @apply mt-9 mb-2 text-lg;
+    font-weight: 600;
+    letter-spacing: -0.012em;
+  }
+  .prose-paper p {
+    @apply my-4;
+  }
+  .prose-paper ul {
+    @apply my-4 pl-5 list-disc;
+  }
+  .prose-paper ol {
+    @apply my-4 pl-5 list-decimal;
+  }
+  .prose-paper li {
+    @apply my-1.5;
+  }
+  .prose-paper blockquote {
+    border-left: 2px solid var(--accent);
+    padding-left: 1rem;
+    color: var(--muted);
+    font-style: italic;
+    margin: 1.25rem 0;
+  }
+  .prose-paper table {
+    @apply my-6 w-full text-sm;
+    border-collapse: collapse;
+  }
+  .prose-paper th,
+  .prose-paper td {
+    border-bottom: 1px solid var(--rule);
+    padding: 0.55rem 0.6rem;
+    text-align: left;
+    vertical-align: top;
+  }
+  .prose-paper th {
+    font-weight: 500;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-size: 0.72rem;
+  }
+  .prose-paper :where(p, li) code {
+    background: var(--code-bg);
+    padding: 1px 5px;
+    border-radius: 3px;
+  }
+  .prose-paper figure {
+    @apply my-8;
+  }
+  .prose-paper figcaption {
+    @apply text-sm mt-2;
+    color: var(--muted);
+  }
+  /* page-load reveal */
+  .reveal {
+    animation: reveal 700ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  .reveal-1 { animation-delay: 60ms; }
+  .reveal-2 { animation-delay: 140ms; }
+  .reveal-3 { animation-delay: 220ms; }
+  .reveal-4 { animation-delay: 300ms; }
+  .reveal-5 { animation-delay: 380ms; }
+}
+
+@keyframes reveal {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal {
+    animation: none;
+  }
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
+
+/* katex tweaks so equations sit on the body baseline cleanly */
+.katex-display {
+  margin: 1.25rem 0 !important;
+  overflow-x: auto;
+  overflow-y: hidden;
+}

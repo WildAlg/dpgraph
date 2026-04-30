@@ -1,0 +1,102 @@
+---
+import Base from "../layouts/Base.astro";
+import StatCard from "../components/StatCard.astro";
+import BibtexBlock from "../components/BibtexBlock.astro";
+
+const arxiv = "https://arxiv.org/abs/2506.20828";
+const arxivPdf = "https://arxiv.org/pdf/2506.20828";
+const vldb = "https://doi.org/10.14778/3749646.3749687";
+const repo = "https://github.com/WildAlg/dpgraph";
+
+const authors = [
+  { name: "Pranay Mundra" },
+  { name: "Charalampos Papamanthou" },
+  { name: "Julian Shun" },
+  { name: "Quanquan C. Liu" },
+];
+---
+
+<Base title="Paper" current="paper" description="Practical and Accurate Local Edge Differentially Private Graph Algorithms — paper, authors, abstract, downloads, BibTeX.">
+  <article class="container-prose py-14 lg:py-20 prose-paper">
+    <div class="reveal reveal-1 small-caps">Proc. VLDB Endow. 18(11) · July 2025 · arXiv 2506.20828</div>
+    <h1 class="reveal reveal-2">Practical and Accurate Local Edge Differentially Private Graph Algorithms</h1>
+
+    <div class="reveal reveal-3 mt-2 text-[14px] flex flex-wrap gap-x-3 gap-y-1" style="color: var(--muted);">
+      {authors.map((a, i) => (
+        <span><span style="color: var(--fg);">{a.name}</span>{i < authors.length - 1 ? "  ·" : ""}</span>
+      ))}
+    </div>
+
+    <div class="reveal reveal-4 mt-8 flex flex-wrap items-center gap-3">
+      <a
+        href={vldb}
+        rel="noreferrer"
+        target="_blank"
+        class="inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-[14px] font-medium no-underline transition-colors"
+        style="background: var(--accent); color: #fff;"
+      >
+        VLDB 2025 (DOI)
+      </a>
+      <a
+        href={arxivPdf}
+        rel="noreferrer"
+        target="_blank"
+        class="inline-flex items-center gap-2 rounded-full border hairline px-5 py-2.5 text-[14px] font-medium no-underline transition-colors hover:bg-[color:var(--code-bg)]"
+        style="border-color: var(--rule);"
+      >
+        Download PDF (arXiv)
+      </a>
+      <a
+        href={repo}
+        rel="noreferrer"
+        target="_blank"
+        class="inline-flex items-center gap-2 rounded-full border hairline px-5 py-2.5 text-[14px] no-underline transition-colors hover:bg-[color:var(--code-bg)]"
+        style="border-color: var(--rule);"
+      >
+        Source on GitHub
+      </a>
+    </div>
+
+    <hr class="my-12" />
+
+    <h2>Abstract</h2>
+    <p>
+      The rise of massive networks across diverse domains necessitates sophisticated graph analytics, often involving sensitive data and raising privacy concerns. This paper addresses these challenges using <em>local differential privacy</em> (LDP), which enforces privacy at the individual level, where no third-party entity is trusted, unlike centralized models that assume a trusted curator.
+    </p>
+    <p>
+      We introduce novel LDP algorithms for two fundamental graph statistics: <em>k-core decomposition</em> and <em>triangle counting</em>. Our approach leverages previously unexplored input-dependent private graph properties, specifically the degeneracy and maximum degree of the graph, to improve theoretical utility. Unlike prior methods, our error bounds are determined by the maximum degree rather than the total number of edges, resulting in significantly tighter theoretical guarantees. For triangle counting, we improve upon the previous work of Imola, Murakami, and Chaudhury, which bounds error in terms of the total number of edges. Instead, our algorithm achieves error bounds based on the graph's degeneracy by leveraging a differentially private out-degree orientation, a refined variant of Eden et al.'s randomized response technique, and a novel, intricate analysis, yielding improved theoretical guarantees over prior state-of-the-art.
+    </p>
+    <p>
+      Beyond theoretical improvements, we are the first to evaluate the practicality of local DP algorithms in a distributed simulation environment, unlike previous works that tested on a single processor. Our experiments on real-world datasets demonstrate substantial accuracy improvements, with our k-core decomposition achieving errors within <strong>3× the exact values</strong> — far outperforming the 131× error in the baseline of Dhulipala et al. Additionally, our triangle counting algorithm reduces multiplicative approximation errors by up to <strong>six orders of magnitude</strong> compared to prior methods, all while maintaining competitive runtime performance.
+    </p>
+
+    <h2>Key results</h2>
+
+    <div class="not-prose mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2">
+      <StatCard
+        value="3×"
+        label="k-core decomposition"
+        emphasis
+        caption="Mean error within 3× exact values; 131× tighter than the prior LEDP baseline."
+      />
+      <StatCard
+        value="10⁶"
+        unit="×"
+        label="Triangle counting"
+        emphasis
+        caption="Multiplicative error reduced by up to six orders of magnitude over prior LDP methods."
+      />
+    </div>
+
+    <h2>Cite</h2>
+
+    <div class="not-prose mt-4">
+      <BibtexBlock />
+    </div>
+
+    <h2>Artifact</h2>
+    <p>
+      The companion artifact — the <code>dpgraph</code> Go framework plus reference implementations of the LEDP, CDP, and RR algorithms — is open-source under MIT and archived on Zenodo. See the <a href={`${import.meta.env.BASE_URL.replace(/\/$/, "")}/docs/quickstart`}>quickstart</a> to run the algorithms in under a minute.
+    </p>
+  </article>
+</Base>

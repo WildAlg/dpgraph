@@ -1,0 +1,89 @@
+---
+layout: ../../../layouts/Doc.astro
+title: k-core LEDP
+description: Local-edge differentially private k-core decomposition. The flagship algorithm of Mundra et al. 2025.
+section: Algorithms
+---
+
+import KCoreAnimation from "../../../components/animations/KCoreAnimation.tsx";
+
+# k-core decomposition <span class="badge badge-accent">LEDP</span>
+
+The flagship algorithm of *Practical and Accurate Local Edge Differentially Private Graph Algorithms*. Each user only ever exposes the result of an ε-local randomizer applied to their adjacency list, and the algorithm uses a **Levels Data Structure** plus **degree thresholding** with bias correction to keep error within roughly 3× of the exact <em>k</em>-core values — about **131× tighter** than the prior state-of-the-art LEDP baseline (Dhulipala et al.).
+
+**Package** [`github.com/WildAlg/dpgraph/algos/kcoreldp`](https://pkg.go.dev/github.com/WildAlg/dpgraph/algos/kcoreldp) · **Registered name** `kcoreLDP`
+
+## Threat model
+
+The curator and all nodes act as honest-but-curious adversaries. Each node only releases the output of an ε-local randomizer on its private adjacency list; sensitivity is one bit per edge per round. Privacy budgets are split as
+
+$$
+\varepsilon_1 = f \cdot \varepsilon \quad \text{(degree thresholding)} \qquad \varepsilon_2 = (1 - f) \cdot \varepsilon \quad \text{(level moving)}
+$$
+
+with `Cfg.Factor` controlling f. The composition of all rounds is ε-LEDP by Definition&nbsp;2.4.
+
+## How it works
+
+Synchronously, over $O(\log(D_{\max}) \log\log n)$ rounds:
+
+1. **Setup.** Coordinator computes the per-vertex degree threshold using a single round of `Geom(ε₁)` noise on each worker's local degrees. The maximum threshold sets the round budget `numOfRounds`.
+2. **Level moving.** Each round `r`, every worker counts its neighbours at the same LDS level (read from the shared public LDS), perturbs that count with `Geom(ε₂ / (2 · v.threshold))`, applies the bias correction $B$, and decides whether to bump the node up a level if the noisy estimate exceeds $(1 + \eta/5)^{\mathcal F(r)}$.
+3. **LDS publish.** The coordinator collects the bit-vectors and publishes the new LDS. Workers see only public levels for the next round.
+4. **Estimate.** After the final round, the coordinator estimates per-vertex core numbers from the settled levels.
+
+<KCoreAnimation client:visible />
+
+The animation tracks node movements in the LDS over a few rounds. **Green** rings mark eligible nodes whose noisy degree cleared the threshold; **orange** rings flash when the noisy check failed and the node halts.
+
+### Why it's practical
+
+Bias correction is the empirical lever. Without bias terms, large negative geometric draws prevent low-degree nodes from ever leaving level 0 — they end up underestimated. The two analytically-derived bias terms (one for thresholding, one for level moving) are calibrated to the standard deviation of the symmetric geometric distribution and recover those nodes at the cost of a small, controlled increase in upward bias.
+
+## Run it
+
+```bash
+go run ./cmd/dpgraph -config_file experiments/configs/cit-Patents-kcoreLDP.yaml \
+                     -workers 8 -link_mbps 1000 -rtt_ms 0.5 -seed 42
+```
+
+Or in code:
+
+```go
+cfg := sim.Config{
+    Graph:      "toy",
+    GraphPath:  "testdata/toy_10node_adj",
+    GraphSize:  10,
+    AlgoName:   "kcoreLDP",
+    NumWorkers: 2,
+    Epsilon:    1.0,
+    Phi:        0.5,
+    Factor:     0.8,
+    Bias:       true,
+    BiasFactor: 1,
+    Noise:      true,
+    Seed:       42,
+    Latency:    sim.BandwidthRTT{LinkSpeedBitsPerSec: 25e6, BaseRTT: time.Millisecond},
+}
+algo.Run(cfg)
+```
+
+## API
+
+The `Algo` struct exposes its post-`Setup` outputs as exported fields so that downstream algorithms (`tcountldp`) can compose with it:
+
+```go
+type Algo struct {
+    LDS            *lds.LDS
+    LevelsPerGroup int
+    NumRounds      int
+    MaxPublicRT    float64
+    // ...
+}
+```
+
+See [the godoc](https://pkg.go.dev/github.com/WildAlg/dpgraph/algos/kcoreldp) for the full surface.
+
+## Citation
+
+*Practical and Accurate Local Edge Differentially Private Graph Algorithms*, §3.1 (Algorithm 3.1, "k-CoreD"). [Proc. VLDB Endow. 18(11), 2025](https://doi.org/10.14778/3749646.3749687) · [arXiv 2506.20828](https://arxiv.org/abs/2506.20828).

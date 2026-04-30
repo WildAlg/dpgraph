@@ -1,0 +1,81 @@
+---
+layout: ../../layouts/Doc.astro
+title: CLI & YAML schema
+description: dpgraph CLI flags and the YAML config format compatible with the parent paper repo.
+section: Get started
+---
+
+# CLI &amp; YAML schema
+
+The bundled CLI at `cmd/dpgraph` consumes a YAML config compatible with the parent paper repository's `experiments/configs/*.yaml`, so the same configs work in both projects. Output filenames follow the legacy schema (`sim.FilenameForConfig`); a sibling `.metrics.json` is also written.
+
+## Synopsis
+
+```bash
+dpgraph -config_file path/to.yaml \
+        -workers 8 \
+        -link_mbps 1000 \
+        -rtt_ms 0.5 \
+        -seed 42 \
+        -output_dir ./out \
+        -run_id 0
+```
+
+## Flags
+
+| Flag | Default | Purpose |
+| --- | --- | --- |
+| `-config_file` | _(required)_ | Path to the YAML config. |
+| `-workers` | `0` | Override `num_workers` from YAML; `0` keeps the YAML value. |
+| `-seed` | `1` | RNG seed. Per-worker streams are derived from this. |
+| `-link_mbps` | `0` | Simulated link speed in Mbps. `0` disables latency injection. |
+| `-rtt_ms` | `0` | Simulated base RTT in milliseconds. |
+| `-output_dir` | `.` | Directory to write result and metrics files. |
+| `-run_id` | `0` | Run identifier folded into the output filename. |
+
+If both `-link_mbps` and `-rtt_ms` are zero, the CLI uses `sim.Zero{}` (no latency injection). Otherwise it uses `sim.BandwidthRTT`.
+
+## YAML keys
+
+| Key | Type | Notes |
+| --- | --- | --- |
+| `graph` | string | Logical graph name; combined with `graph_loc` → `<graph_loc>/<graph>_adj`. |
+| `graph_size` | int | Dense vertex count (upper bound on vertex IDs). |
+| `algo_name` | string | Registered algorithm name — see below. |
+| `num_workers` | int | Number of simulated workers. |
+| `epsilon` | float | Privacy parameter ε. |
+| `phi` | float | Approximation parameter φ (used by k-core algorithms). |
+| `factor` | float | Privacy split fraction f (defaults to 0.8 if zero). |
+| `bias` | bool | Apply bias correction in k-CoreD? |
+| `bias_factor` | int | Bias-term scale. |
+| `noise` | bool | Inject noise? Set false for deterministic, byte-identical baselines. |
+| `runs` | int | Repeats with different seeds. |
+| `output_file_tag` | string | Suffix folded into output filenames. |
+| `graph_loc` | string | Directory holding the `<graph>_adj` file. |
+| `bidirectional` | bool | Treat the input edge list as undirected. |
+
+## Registered algorithms
+
+The CLI registers all reference algorithms via blank import:
+
+| Name | Description |
+| --- | --- |
+| `kcoreLDP` | LDP / LEDP <em>k</em>-core decomposition (the paper's flagship). |
+| `kcoreCDP` | Central-DP <em>k</em>-core. |
+| `triangle_countingLDP` | EdgeOrient — LDP / LEDP triangle counting. |
+| `triangle_countingCDP` | Central-DP triangle counting. |
+| `rr-kcore` | Edge-RR baseline + classical heap-peeling. |
+| `rr-tcount` | Edge-RR baseline + triple-wise product sum. |
+
+Calling `dpgraph` with no arguments prints the registered names.
+
+## Output
+
+For a config with `graph: cit-Patents`, `algo_name: kcoreLDP`, `output_file_tag: trial`, the CLI writes:
+
+```
+out/<sim.FilenameForConfig(cfg)>            # per-vertex result
+out/<sim.FilenameForConfig(cfg)>.metrics.json  # phase timers, bytes, messages
+```
+
+The legacy filename schema is an external contract used by the parent paper repository's `scripts/get_results.py` and must not change.

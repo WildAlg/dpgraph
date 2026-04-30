@@ -1,0 +1,101 @@
+---
+layout: ../../layouts/Doc.astro
+title: Framework concepts
+description: How dpgraph runs an algorithm — RunCtx, RunRound, latency models, RNG seeding, and metrics.
+section: Get started
+---
+
+# Framework concepts
+
+The `dpgraph` framework owns coordination, latency injection, RNG seeding, and metrics so algorithm authors can focus on the algorithm itself. You implement four methods; you never write goroutines, channels, locks, or `time.Sleep`.
+
+## The plugin contract
+
+Every algorithm implements `algo.Algorithm`:
+
+```go
+type Algorithm interface {
+    Name() string
+    Setup(ctx *sim.RunCtx) error
+    Run(ctx *sim.RunCtx) error
+    Finalize(ctx *sim.RunCtx, sink *sim.ResultSink) error
+}
+```
+
+and registers a factory in `init()`:
+
+```go
+func init() {
+    algo.Register("my_algo", func(cfg sim.Config) algo.Algorithm { return &Algo{} })
+}
+```
+
+The CLI (`cmd/dpgraph/main.go`) blank-imports each algorithm package so registration happens at startup. **A new algorithm is not dispatchable until that blank import is added.**
+
+## RunCtx — the run-scoped object
+
+`sim.RunCtx` is the per-run object handed to your algorithm. It owns:
+
+- the loaded `*graph.Graph` and its per-worker `Shards`;
+- the `LatencyModel`;
+- `Metrics` (phase timers, message counters, bytes, simulated network ns);
+- shared run-scoped `State`;
+- per-worker RNGs seeded from `Cfg.Seed + workerID` (so seeded runs are deterministic).
+
+## Fan-out via `RunRound`
+
+`RunCtx.RunRound(round, fn)` is **the** way to fan out a super-step:
+
+```go
+out := ctx.RunRound(0, func(w *sim.WorkerCtx) any {
+    local := make(map[int]int64)
+    for v, nbrs := range w.Shard.AdjacencyList {
+        g := noise.NewGeom(ctx.Cfg.Epsilon)
+        local[v] = int64(len(nbrs)) + g.TwoSidedGeometric()
+    }
+    w.SimulateSend(len(local) * 16) // 16B per (vertex_id, count) pair
+    return local
+})
+```
+
+It spawns one goroutine per worker, runs `fn` concurrently with each worker's `WorkerCtx`, joins, and returns the per-worker outputs indexed by worker ID. Do **not** roll your own goroutines or `sync.WaitGroup`s — `RunRound` is the framework's coordination primitive.
+
+## Simulated network latency
+
+Every message that crosses a worker/coordinator boundary should be reported via `WorkerCtx`:
+
+```go
+w.SimulateSend(bytes)   // worker → coordinator
+w.SimulateRecv(bytes)   // coordinator → worker
+```
+
+These calls apply the configured `LatencyModel`, record bytes/messages in metrics, and `time.Sleep` the calling goroutine. Concurrent worker sleeps overlap, so a round's wall time approximates `max(worker_compute + send_delay)` — matching real distributed systems where parallel sends share no critical path. Coordinator-side broadcasts go through `RunCtx.SimulateBroadcast` and count as **one** message, not N.
+
+Two latency models ship out of the box:
+
+| Model | When to use |
+| --- | --- |
+| `sim.Zero{}` | Default. Used by tests so behaviour is deterministic across machines. |
+| `sim.BandwidthRTT{LinkSpeedBitsPerSec, BaseRTT}` | Realistic distributed runs. Fed from CLI flags `-link_mbps` and `-rtt_ms`. |
+
+You can implement your own `LatencyModel` if you need a more elaborate cost model.
+
+## Shared state
+
+`sim.State` is a mutex-wrapped `map[string]any` for per-round broadcast data — e.g. an LDS, a noisy threshold, a published low-out-degree ordering. Writes to `State` do **not** trigger latency injection; you must model that cost explicitly with a `SimulateBroadcast` or `SimulateSend` call at the boundary.
+
+## Determinism
+
+With `Cfg.Noise = false` and a fixed `Cfg.Seed`, output must be byte-identical across platforms. All randomness in algorithms must flow through `WorkerCtx.RNG()` or `pkg/noise` so seeded runs are reproducible. Tests should compare against the deterministic output on `testdata/toy_10node_adj`.
+
+## Composition
+
+Algorithms can compose. `tcountldp` runs `kcoreldp` first, reads its post-`Setup` fields (`LDS`, `LevelsPerGroup`, …), then continues with three more rounds. The shared per-vertex state is in `algos/internal/kcorecore`. Composition works because every algorithm exposes its post-`Setup` outputs as exported struct fields rather than hiding them behind goroutines.
+
+## What you don't write
+
+- Goroutines, channels, or `sync.WaitGroup`s.
+- `time.Sleep` calls — the latency model handles delay.
+- Graph loading or partitioning — `pkg/graph.Load` and `pkg/graph.Partition` already do it.
+- Per-worker RNG plumbing — `WorkerCtx.RNG()` is seeded for you.
+- Output filename schema — `sim.FilenameForConfig` is the external contract used by the parent paper repo.

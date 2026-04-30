@@ -1,0 +1,129 @@
+---
+layout: ../../layouts/Doc.astro
+title: Writing an algorithm
+description: Implement the four-method Algorithm interface, register it, and ship a deterministic test.
+section: Contribute
+---
+
+# Writing an algorithm
+
+If your algorithm clears the bar below, the maintainers will happily merge it into `algos/` so other researchers can run and compare against it. The contract is small.
+
+## 1. Implement the four methods
+
+Create a package under `algos/<name>/`:
+
+```go
+package mydeg
+
+import (
+    "github.com/WildAlg/dpgraph/pkg/algo"
+    "github.com/WildAlg/dpgraph/pkg/noise"
+    "github.com/WildAlg/dpgraph/pkg/sim"
+)
+
+const Name = "private_degree"
+
+func init() {
+    algo.Register(Name, func(cfg sim.Config) algo.Algorithm { return &Algo{} })
+}
+
+type Algo struct{ noisyDeg []int64 }
+
+func (*Algo) Name() string { return Name }
+
+func (a *Algo) Setup(ctx *sim.RunCtx) error {
+    a.noisyDeg = make([]int64, ctx.Cfg.GraphSize)
+    return nil
+}
+
+func (a *Algo) Run(ctx *sim.RunCtx) error {
+    out := ctx.RunRound(0, func(w *sim.WorkerCtx) any {
+        local := make(map[int]int64)
+        for v, nbrs := range w.Shard.AdjacencyList {
+            g := noise.NewGeom(ctx.Cfg.Epsilon)
+            local[v] = int64(len(nbrs)) + g.TwoSidedGeometric()
+        }
+        w.SimulateSend(len(local) * 16)
+        return local
+    })
+    for _, msg := range out {
+        for v, d := range msg.(map[int]int64) {
+            a.noisyDeg[v] = d
+        }
+    }
+    return nil
+}
+
+func (a *Algo) Finalize(ctx *sim.RunCtx, sink *sim.ResultSink) error {
+    for i, d := range a.noisyDeg {
+        if err := sink.WriteVertex(i, d); err != nil {
+            return err
+        }
+    }
+    return nil
+}
+```
+
+That's it — no manual goroutines, channels, locks, or `time.Sleep`. The framework runs your `WorkerFn` in parallel, applies the configured `LatencyModel` whenever you call `SimulateSend` / `SimulateRecv`, and joins.
+
+## 2. Use the framework primitives
+
+- All randomness flows through `WorkerCtx.RNG()` (seeded from `Cfg.Seed + workerID`) or through `pkg/noise`.
+- Every message that crosses a worker/coordinator boundary is reported via `SimulateSend` / `SimulateRecv` with a realistic byte size — the metrics block is meaningless otherwise.
+- Coordinator-side broadcasts go through `RunCtx.SimulateBroadcast` (one message, not N).
+
+## 3. Determinism
+
+With `Cfg.Noise = false` and a fixed `Cfg.Seed`, output must be byte-identical across platforms. Tests check this against `testdata/toy_10node_adj`. An end-to-end test against that toy graph is required.
+
+```go
+func TestPrivateDegEndToEnd(t *testing.T) {
+    tmp := t.TempDir()
+    cfg := sim.Config{
+        Graph:     "toy",
+        GraphPath: filepath.Join("..", "..", "testdata", "toy_10node_adj"),
+        GraphSize: 10,
+        AlgoName:  Name,
+        NumWorkers: 2,
+        Epsilon: 1.0,
+        Noise:   false, // deterministic path
+        Seed:    42,
+        OutputDir: tmp,
+    }
+    if err := algo.Run(cfg); err != nil { t.Fatal(err) }
+    // ... read result, compare ordering or exact values ...
+}
+```
+
+## 4. Wire your algorithm into the CLI
+
+Add a blank import to `cmd/dpgraph/main.go` so the CLI can dispatch your algorithm by name:
+
+```go
+import (
+    _ "github.com/WildAlg/dpgraph/algos/mydeg"
+)
+```
+
+## 5. Document the threat model
+
+Add a one-paragraph package doc comment explaining what privacy guarantee the algorithm provides (LDP / LEDP / CDP / RR baseline), what `Cfg.Epsilon` and `Cfg.Phi` control, and any references to the paper(s) that introduced it. This paragraph is what users read first.
+
+## PR checklist
+
+- [ ] `go build ./...` clean
+- [ ] `go test ./...` passes locally
+- [ ] `go vet ./...` and `golangci-lint run` clean (CI enforces both)
+- [ ] At least one end-to-end test against `testdata/`
+- [ ] Algorithm registered via `init()` and blank-imported in `cmd/dpgraph/main.go`
+- [ ] Package doc comment with threat model + paper reference
+- [ ] README's "Reference algorithms" table updated
+- [ ] If new public APIs are added, godoc comments on every exported symbol
+
+## Style
+
+- Idiomatic Go. We run `gofmt` (CI fails otherwise).
+- Errors returned, not logged-and-swallowed.
+- One-line doc comments are usually enough; algorithm-level threat-model paragraphs are the exception.
+- Avoid adding configuration knobs that aren't exercised by your tests — speculative flags rot fast.

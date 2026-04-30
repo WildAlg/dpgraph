@@ -4,6 +4,8 @@
 [![Go Reference](https://pkg.go.dev/badge/github.com/WildAlg/dpgraph.svg)](https://pkg.go.dev/github.com/WildAlg/dpgraph)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
+📘 **Website & docs:** <https://wildalg.github.io/dpgraph> · 📄 **Paper (VLDB 2025):** <https://doi.org/10.14778/3749646.3749687>
+
 `dpgraph` is a Go framework for **prototyping and benchmarking differentially private distributed graph algorithms**. You write a small `Algorithm` plugin; the framework handles graph loading, partitioning, worker fan-out, RNG seeding, metrics, and **simulated network latency** so your wall-clock numbers reflect a realistic distributed deployment instead of a single-machine goroutine soup.
 
 It ships with reference implementations of the algorithms from *Practical and Accurate Local Differentially Private Graph Algorithms* (k-core decomposition and triangle counting under LDP and CDP, plus randomized-response baselines) so you can use them as templates or compare against them.

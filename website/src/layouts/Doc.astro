@@ -1,0 +1,78 @@
+---
+import Base from "./Base.astro";
+
+interface Props {
+  title?: string;
+  description?: string;
+  section?: string;
+  frontmatter?: { title?: string; description?: string; section?: string };
+}
+
+const { frontmatter } = Astro.props;
+const title = Astro.props.title ?? frontmatter?.title ?? "Docs";
+const description = Astro.props.description ?? frontmatter?.description;
+const section = Astro.props.section ?? frontmatter?.section;
+const base = import.meta.env.BASE_URL.replace(/\/$/, "");
+const link = (href: string) => `${base}${href}`;
+const path = Astro.url.pathname.replace(/\/$/, "");
+
+const groups: Array<{ label: string; links: Array<{ label: string; href: string }> }> = [
+  {
+    label: "Get started",
+    links: [
+      { label: "Quickstart", href: "/docs/quickstart" },
+      { label: "Framework concepts", href: "/docs/concepts" },
+      { label: "CLI & YAML schema", href: "/docs/cli" },
+    ],
+  },
+  {
+    label: "Algorithms",
+    links: [
+      { label: "k-core LEDP", href: "/docs/algorithms/k-core-ledp" },
+      { label: "k-core CDP", href: "/docs/algorithms/k-core-cdp" },
+      { label: "Triangle LEDP", href: "/docs/algorithms/triangle-ledp" },
+      { label: "Triangle CDP", href: "/docs/algorithms/triangle-cdp" },
+      { label: "RR baselines", href: "/docs/algorithms/rr-baselines" },
+    ],
+  },
+  {
+    label: "Contribute",
+    links: [{ label: "Writing an algorithm", href: "/docs/writing-an-algorithm" }],
+  },
+];
+---
+
+<Base title={title} description={description} current="docs">
+  <div class="container-wide grid grid-cols-1 gap-10 py-10 lg:grid-cols-12 lg:gap-12 lg:py-14">
+    <aside class="lg:col-span-3 lg:sticky lg:top-20 lg:self-start">
+      <nav aria-label="Documentation" class="space-y-7 text-[14px]">
+        {groups.map((g) => (
+          <div>
+            <div class="small-caps mb-2">{g.label}</div>
+            <ul class="space-y-1">
+              {g.links.map((l) => {
+                const active = path.endsWith(l.href);
+                return (
+                  <li>
+                    <a
+                      href={link(l.href)}
+                      class={`block rounded -mx-2 px-2 py-1 no-underline transition-colors ${active ? "text-[color:var(--accent)] font-medium" : "hover:bg-[color:var(--code-bg)]"}`}
+                      aria-current={active ? "page" : undefined}
+                    >{l.label}</a>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        ))}
+      </nav>
+    </aside>
+
+    <article class="lg:col-span-9">
+      <div class="max-w-prose prose-paper">
+        {section ? <div class="small-caps mb-3">{section}</div> : null}
+        <slot />
+      </div>
+    </article>
+  </div>
+</Base>

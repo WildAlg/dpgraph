@@ -1,0 +1,334 @@
+---
+import Base from "../layouts/Base.astro";
+import LedpAnimation from "../components/animations/LedpAnimation.tsx";
+import AlgoCard from "../components/AlgoCard.astro";
+import StatCard from "../components/StatCard.astro";
+import BibtexBlock from "../components/BibtexBlock.astro";
+import CopyButton from "../components/CopyButton.astro";
+import CdpDiagram from "../components/CdpDiagram.astro";
+import LdpDiagram from "../components/LdpDiagram.astro";
+import LedpDiagram from "../components/LedpDiagram.astro";
+
+const base = import.meta.env.BASE_URL.replace(/\/$/, "");
+const link = (href: string) => `${base}${href}`;
+
+const arxiv = "https://arxiv.org/abs/2506.20828";
+const arxivPdf = "https://arxiv.org/pdf/2506.20828";
+const repo = "https://github.com/WildAlg/dpgraph";
+
+const installLine = "go get github.com/WildAlg/dpgraph";
+---
+
+<Base title="dpgraph" current="home">
+  <!-- HERO -->
+  <section class="container-wide pt-10 pb-20 sm:pt-16 lg:pt-20 lg:pb-28">
+    <div class="grid grid-cols-1 gap-10 lg:grid-cols-12 lg:gap-12">
+      <div class="lg:col-span-7 xl:col-span-7">
+        <h1 class="display reveal reveal-2 text-display-1 tracking-tightest">
+          A Go framework for<br/>
+          <span style="color: var(--accent);">differentially private</span><br/>
+          graph algorithms.
+        </h1>
+        <p class="reveal reveal-3 mt-7 max-w-xl text-[17px] leading-relaxed" style="color: var(--muted);">
+          Prototype and benchmark distributed LDP, LEDP, and CDP graph algorithms without writing the plumbing. Workers, simulated network latency, RNG seeding and metrics are handled — you implement four methods.
+        </p>
+        <div class="reveal reveal-4 mt-9 flex flex-wrap items-center gap-3">
+          <a
+            href={link("/docs/quickstart")}
+            class="inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-[14px] font-medium no-underline transition-colors"
+            style="background: var(--accent); color: #fff;"
+          >
+            Quickstart
+            <svg viewBox="0 0 24 24" class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <path d="M5 12h14M13 6l6 6-6 6" />
+            </svg>
+          </a>
+          <a
+            href={link("/docs/writing-an-algorithm")}
+            class="inline-flex items-center gap-2 rounded-full border hairline px-5 py-2.5 text-[14px] font-medium no-underline transition-colors hover:bg-[color:var(--code-bg)]"
+            style="border-color: var(--rule);"
+          >
+            Writing an algorithm
+          </a>
+          <a
+            href={repo}
+            rel="noreferrer"
+            target="_blank"
+            class="inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-[14px] no-underline transition-colors hover:bg-[color:var(--code-bg)]"
+          >
+            <svg viewBox="0 0 24 24" class="h-4 w-4" fill="currentColor" aria-hidden="true">
+              <path d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.92.57.1.78-.25.78-.55v-2.1c-3.2.7-3.87-1.38-3.87-1.38-.52-1.32-1.27-1.67-1.27-1.67-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.18 1.76 1.18 1.02 1.75 2.69 1.24 3.35.95.1-.74.4-1.24.72-1.53-2.55-.29-5.23-1.27-5.23-5.65 0-1.25.45-2.27 1.18-3.07-.12-.29-.51-1.46.11-3.04 0 0 .96-.31 3.15 1.17.91-.25 1.89-.38 2.86-.38.97 0 1.95.13 2.86.38 2.19-1.48 3.15-1.17 3.15-1.17.62 1.58.23 2.75.11 3.04.74.8 1.18 1.82 1.18 3.07 0 4.4-2.69 5.36-5.25 5.64.41.36.78 1.06.78 2.13v3.16c0 .31.21.66.79.55C20.21 21.39 23.5 17.08 23.5 12 23.5 5.65 18.35.5 12 .5z"/>
+            </svg>
+            GitHub
+          </a>
+        </div>
+        <div class="reveal reveal-5 mt-12 flex flex-col gap-2 text-[13px]" style="color: var(--muted);">
+          <div class="flex items-center gap-3">
+            <span class="font-mono">$</span>
+            <code class="font-mono text-[13px]" style="color: var(--fg);">{installLine}</code>
+            <CopyButton target="#install-line" label="" />
+          </div>
+          <span id="install-line" class="sr-only">{installLine}</span>
+          <div class="flex items-center gap-3 opacity-70">
+            <span class="font-mono">→</span>
+            <span>requires Go 1.25+ — MIT licensed</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="lg:col-span-5 xl:col-span-5">
+        <div class="reveal reveal-3 rounded-md border hairline p-4 sm:p-6" style="border-color: var(--rule);">
+          <div class="mb-3 flex items-center justify-between">
+            <span class="small-caps">The LEDP model</span>
+            <span class="badge">animated</span>
+          </div>
+          <LedpAnimation client:visible />
+          <p class="mt-4 text-[12.5px] leading-relaxed" style="color: var(--muted);">
+            Each user keeps their adjacency list private, perturbs it with an ε-local randomizer, and ships a noisy output to an untrusted curator who aggregates the results into LEDP-statistics.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- THE PAPER -->
+  <section class="container-wide py-16 lg:py-20 border-t hairline" style="border-color: var(--rule);">
+    <div class="grid grid-cols-1 gap-10 lg:grid-cols-12 lg:gap-12">
+      <div class="lg:col-span-5">
+        <div class="small-caps mb-3">The paper this implements</div>
+        <h2 class="display text-display-2 tracking-tightish">
+          Practical and Accurate Local Edge Differentially Private Graph Algorithms.
+        </h2>
+        <p class="mt-5 max-w-md text-[15px]" style="color: var(--muted);">
+          Proceedings of the VLDB Endowment, Vol.&nbsp;18, No.&nbsp;11 — July 2025. The first practical LEDP algorithms for <em>k</em>-core decomposition and triangle counting, with theoretical and empirical guarantees that close the gap to non-private baselines.
+        </p>
+        <div class="mt-7 flex flex-wrap items-center gap-3 text-[14px]">
+          <a
+            href={link("/paper")}
+            class="inline-flex items-center gap-2 rounded-full border hairline px-5 py-2.5 font-medium no-underline transition-colors hover:bg-[color:var(--code-bg)]"
+            style="border-color: var(--rule);"
+          >
+            Paper page
+          </a>
+          <a href="https://doi.org/10.14778/3749646.3749687" rel="noreferrer" target="_blank">VLDB 2025 ↗</a>
+          <span style="color: var(--muted);">·</span>
+          <a href={arxiv} rel="noreferrer" target="_blank">arXiv ↗</a>
+        </div>
+      </div>
+
+      <div class="lg:col-span-7 grid grid-cols-1 gap-5 sm:grid-cols-2">
+        <StatCard
+          value="3×"
+          label="k-core decomposition"
+          emphasis
+          caption="Average error within 3× of the exact k-core values; 131× tighter than the prior LEDP baseline."
+        />
+        <StatCard
+          value="10⁶"
+          unit="×"
+          label="Triangle counting"
+          emphasis
+          caption="Multiplicative approximation error reduced by up to six orders of magnitude over the best previous LDP method, while staying competitive on runtime."
+        />
+      </div>
+    </div>
+  </section>
+
+  <!-- WHAT IS LEDP -->
+  <section class="container-wide py-20 border-t hairline" style="border-color: var(--rule);">
+    <div class="max-w-2xl">
+      <div class="small-caps mb-3">Background</div>
+      <h2 class="display text-display-2 tracking-tightish">
+        Three threat models, one practical sweet spot.
+      </h2>
+      <p class="mt-5 text-[16px]" style="color: var(--muted);">
+        Differential privacy on graphs is defined by who you trust with the raw edges. The LEDP model keeps adjacency lists local, like LDP, but its analyses leverage <em>input-dependent</em> structural properties (degeneracy, max degree) to escape the noise floor that randomized response imposes.
+      </p>
+    </div>
+
+    <div class="mt-12 grid grid-cols-1 gap-x-8 gap-y-10 md:grid-cols-3">
+      <div>
+        <div class="flex items-center gap-2">
+          <span class="badge">Central DP</span>
+        </div>
+        <h3 class="display mt-3 text-2xl">Curator sees the whole graph.</h3>
+        <p class="mt-3 text-[15px]" style="color: var(--muted);">
+          A trusted aggregator holds every adjacency list, runs the algorithm, and only the released statistic is noised. Strong utility — but you must trust the curator.
+        </p>
+        <CdpDiagram />
+      </div>
+      <div>
+        <div class="flex items-center gap-2">
+          <span class="badge">LDP &middot; RR</span>
+        </div>
+        <h3 class="display mt-3 text-2xl">Each user noises their adjacency.</h3>
+        <p class="mt-3 text-[15px]" style="color: var(--muted);">
+          No central trust. Classical edge randomized response flips each edge independently with probability <span class="font-mono">1/(eᵉ+1)</span>. Privacy is clean; utility on real graphs is poor.
+        </p>
+        <LdpDiagram />
+      </div>
+      <div>
+        <div class="flex items-center gap-2">
+          <span class="badge badge-accent">LEDP &middot; this work</span>
+        </div>
+        <h3 class="display mt-3 text-2xl">Local edge DP, with structure.</h3>
+        <p class="mt-3 text-[15px]" style="color: var(--muted);">
+          Users still apply ε-local randomizers, but the algorithm exploits public properties — like degeneracy and a low-out-degree orientation — to get error bounds independent of <span class="font-mono">|E|</span>.
+        </p>
+        <LedpDiagram />
+      </div>
+    </div>
+  </section>
+
+  <!-- ALGORITHMS -->
+  <section class="container-wide py-20 border-t hairline" style="border-color: var(--rule);">
+    <div class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+      <div>
+        <div class="small-caps mb-3">Reference algorithms</div>
+        <h2 class="display text-display-2 tracking-tightish">
+          Six implementations, one plugin contract.
+        </h2>
+      </div>
+      <a href={link("/docs/writing-an-algorithm")} class="text-[14px]">Writing your own →</a>
+    </div>
+
+    <div class="mt-10 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <AlgoCard
+        href="/docs/algorithms/k-core-ledp"
+        name="k-core decomposition"
+        badge="LEDP"
+        description="The paper's flagship algorithm. Workers settle a Levels Data Structure round-by-round; geometric noise + bias terms keep error within 3× of exact."
+      />
+      <AlgoCard
+        href="/docs/algorithms/triangle-ledp"
+        name="Triangle counting"
+        badge="LEDP"
+        description="EdgeOrient — k-core LEDP → randomized response → low-out-degree orientation → Laplace-noised triangle enumeration. Up to 10⁶× lower error."
+      />
+      <AlgoCard
+        href="/docs/algorithms/k-core-cdp"
+        name="k-core decomposition"
+        badge="CDP"
+        description="Trusted-curator counterpart to k-core LEDP, useful as an upper bound on accuracy."
+      />
+      <AlgoCard
+        href="/docs/algorithms/triangle-cdp"
+        name="Triangle counting"
+        badge="CDP"
+        description="Curator-side four-phase pipeline mirroring EdgeOrient with even ε/4 budgets across phases."
+      />
+      <AlgoCard
+        href="/docs/algorithms/rr-baselines"
+        name="rr-kcore"
+        badge="RR"
+        description="Edge-flip RR plus classical heap-peeling. The simplest LDP baseline, included for context."
+      />
+      <AlgoCard
+        href="/docs/algorithms/rr-baselines"
+        name="rr-tcount"
+        badge="RR"
+        description="Triple-wise product sum over the rescaled noisy adjacency matrix. Conceptually simple, accuracy degrades fast with ε."
+      />
+    </div>
+  </section>
+
+  <!-- INSTALL / RUN -->
+  <section class="container-wide py-20 border-t hairline" style="border-color: var(--rule);">
+    <div class="grid grid-cols-1 gap-10 lg:grid-cols-12 lg:gap-12">
+      <div class="lg:col-span-5">
+        <div class="small-caps mb-3">60-second tour</div>
+        <h2 class="display text-display-2 tracking-tightish">Run the example.</h2>
+        <p class="mt-5 max-w-md text-[15px]" style="color: var(--muted);">
+          Clone, run one command, and you've executed an LDP <em>k</em>-core decomposition with simulated network latency on a 10-vertex toy graph. Output includes per-vertex core estimates and a metrics block with message counts, bytes transferred, and simulated network nanoseconds.
+        </p>
+        <div class="mt-7 flex flex-wrap gap-3">
+          <a
+            href={link("/docs/quickstart")}
+            class="inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-[14px] font-medium no-underline transition-colors"
+            style="background: var(--accent); color: #fff;"
+          >
+            Full quickstart
+            <svg viewBox="0 0 24 24" class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <path d="M5 12h14M13 6l6 6-6 6" />
+            </svg>
+          </a>
+          <a
+            href={link("/docs/concepts")}
+            class="inline-flex items-center gap-2 rounded-full border hairline px-5 py-2.5 text-[14px] no-underline transition-colors hover:bg-[color:var(--code-bg)]"
+            style="border-color: var(--rule);"
+          >
+            Framework concepts
+          </a>
+        </div>
+      </div>
+      <div class="lg:col-span-7">
+        <div class="rounded-md border hairline overflow-hidden" style="border-color: var(--rule);">
+          <div class="flex items-center justify-between border-b px-4 py-2" style="border-color: var(--rule);">
+            <div class="flex items-center gap-3 text-[12px] font-mono" style="color: var(--muted);">
+              <span style="color: var(--accent);">●</span>
+              <span>examples/hello_kcore</span>
+            </div>
+            <span class="badge">go run</span>
+          </div>
+          <pre class="!m-0 !rounded-none !border-0" set:html={`<code><span style="color: var(--muted);">$</span> git clone https://github.com/WildAlg/dpgraph
+<span style="color: var(--muted);">$</span> cd dpgraph
+<span style="color: var(--muted);">$</span> go run ./examples/hello_kcore
+
+<span style="color: var(--muted);">=== core numbers ===</span>
+0\t2.5125
+1\t2.5125
+2\t2.5125
+3\t2.5125
+4\t1.6750
+5\t1.6750
+6\t1.6750
+7\t0.0000
+8\t0.0000
+9\t0.0000
+
+<span style="color: var(--muted);">=== metrics ===</span>
+{
+  <span style="color: var(--accent);">"messages"</span>: 64,
+  <span style="color: var(--accent);">"bytes"</span>: 1280,
+  <span style="color: var(--accent);">"sim_network_ns"</span>: 32108800,
+  <span style="color: var(--accent);">"phases"</span>: { ... }
+}</code>`}></pre>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CITE -->
+  <section class="container-wide py-20 border-t hairline" style="border-color: var(--rule);">
+    <div class="grid grid-cols-1 gap-10 lg:grid-cols-12 lg:gap-12">
+      <div class="lg:col-span-5">
+        <div class="small-caps mb-3">If you use this work</div>
+        <h2 class="display text-display-2 tracking-tightish">Cite the paper.</h2>
+        <p class="mt-5 max-w-md text-[15px]" style="color: var(--muted);">
+          <em>Practical and Accurate Local Edge Differentially Private Graph Algorithms.</em> Proc. VLDB Endow. 18(11), 2025.
+        </p>
+        <div class="mt-7 flex flex-wrap gap-3 text-[14px]">
+          <a href="https://doi.org/10.14778/3749646.3749687" rel="noreferrer" target="_blank">VLDB 2025</a>
+          <span style="color: var(--muted);">·</span>
+          <a href={arxivPdf} rel="noreferrer" target="_blank">arXiv PDF</a>
+          <span style="color: var(--muted);">·</span>
+          <a href={link("/paper")}>Paper page</a>
+        </div>
+      </div>
+      <div class="lg:col-span-7">
+        <BibtexBlock />
+      </div>
+    </div>
+  </section>
+</Base>
+
+<!-- Inline diagram components used by the LEDP background section -->
+<style is:global>
+  .mini-diagram {
+    margin-top: 1.25rem;
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    padding: 14px 16px;
+    background: color-mix(in srgb, var(--bg) 100%, var(--rule) 0%);
+  }
+</style>

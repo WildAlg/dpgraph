@@ -1,0 +1,33 @@
+---
+interface Props {
+  href: string;
+  name: string;
+  badge: "LEDP" | "CDP" | "RR";
+  description: string;
+}
+
+const { href, name, badge, description } = Astro.props;
+const base = import.meta.env.BASE_URL.replace(/\/$/, "");
+const badgeClass =
+  badge === "LEDP" ? "badge-accent" : badge === "CDP" ? "badge" : "badge-noise";
+---
+
+<a
+  href={`${base}${href}`}
+  class="group block rounded-md border hairline p-5 no-underline transition-all duration-200 hover:-translate-y-0.5"
+  style="border-color: var(--rule); background: color-mix(in srgb, var(--bg) 100%, var(--rule) 0%);"
+>
+  <div class="flex items-start justify-between gap-3">
+    <div class="font-medium text-[15px] leading-snug">{name}</div>
+    <span class={`badge ${badgeClass}`}>{badge}</span>
+  </div>
+  <p class="mt-2 text-[14px] leading-relaxed" style="color: var(--muted);">
+    {description}
+  </p>
+  <div class="mt-3 flex items-center gap-1 text-[12px] font-medium text-[color:var(--accent)] opacity-0 transition-opacity group-hover:opacity-100">
+    Read
+    <svg viewBox="0 0 24 24" class="h-3 w-3" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+      <path d="M5 12h14M13 6l6 6-6 6" />
+    </svg>
+  </div>
+</a>

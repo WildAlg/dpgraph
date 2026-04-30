@@ -1,0 +1,58 @@
+---
+layout: ../../../layouts/Doc.astro
+title: Triangle counting CDP
+description: Central-DP triangle counting — curator-side four-phase pipeline mirroring EdgeOrient with even ε/4 budgets.
+section: Algorithms
+---
+
+# Triangle counting <span class="badge">CDP</span>
+
+The central-DP counterpart to EdgeOrient. The curator runs the same four-phase pipeline (k-core LDS → edge-RR → max out-degree → Laplace-noised triangle count) but on the full adjacency list, with privacy budgets folded into a single trusted aggregator.
+
+**Package** [`github.com/WildAlg/dpgraph/algos/tcountcdp`](https://pkg.go.dev/github.com/WildAlg/dpgraph/algos/tcountcdp) · **Registered name** `triangle_countingCDP`
+
+## Threat model
+
+The curator is trusted. Privacy budget is split evenly across the four sub-steps (ε/4 each), matching the original `triangle-counting-cdp.go` reference.
+
+## How it works
+
+| Phase | Mechanism | Budget |
+| --- | --- | --- |
+| 1. k-core LDS | `kcoreCDP` pass | ε / 4 |
+| 2. Edge-RR | Randomized response over the upper triangle of the full adjacency | ε / 4 |
+| 3. Max out-degree | Geometric on the global max out-degree | ε / 4 |
+| 4. Count triangles | Laplace on the oriented triangle count | ε / 4 |
+
+Operationally, this runs as a single `RunRound`-style worker (no real network); reported network metrics are zero in this threat model.
+
+## Run it
+
+```bash
+go run ./cmd/dpgraph -config_file experiments/configs/cit-Patents-tcountCDP.yaml \
+                     -seed 42
+```
+
+```go
+cfg := sim.Config{
+    Graph:      "toy",
+    GraphPath:  "testdata/toy_10node_adj",
+    GraphSize:  10,
+    AlgoName:   "triangle_countingCDP",
+    NumWorkers: 1,
+    Epsilon:    1.0,
+    Phi:        0.5,
+    Factor:     0.8,
+    Noise:      true,
+    Seed:       42,
+}
+algo.Run(cfg)
+```
+
+## API
+
+See [the godoc](https://pkg.go.dev/github.com/WildAlg/dpgraph/algos/tcountcdp).
+
+## Citation
+
+The CDP variant tracks the LEDP construction in §4 of *[Practical and Accurate Local Edge Differentially Private Graph Algorithms](https://doi.org/10.14778/3749646.3749687)* (Proc. VLDB Endow. 18(11), 2025); budgets and analyses are simpler because no per-user randomizer is involved.

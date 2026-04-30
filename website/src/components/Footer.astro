@@ -1,0 +1,54 @@
+---
+const base = import.meta.env.BASE_URL.replace(/\/$/, "");
+const link = (href: string) => `${base}${href}`;
+const year = new Date().getFullYear();
+---
+
+<footer class="mt-32 border-t hairline" style="border-color: var(--rule);">
+  <div class="container-wide py-12">
+    <div class="grid grid-cols-1 gap-10 md:grid-cols-12">
+      <div class="md:col-span-5">
+        <div class="display text-2xl leading-none">dpgraph</div>
+        <p class="mt-3 max-w-sm text-[15px]" style="color: var(--muted);">
+          A Go framework for prototyping and benchmarking differentially private distributed graph algorithms. Reference implementations of the LEDP <em>k</em>-core decomposition and triangle-counting algorithms.
+        </p>
+      </div>
+      <div class="md:col-span-3">
+        <div class="small-caps mb-3">Read</div>
+        <ul class="space-y-1.5 text-[14px]">
+          <li><a href={link("/docs/quickstart")}>Quickstart</a></li>
+          <li><a href={link("/docs/concepts")}>Framework concepts</a></li>
+          <li><a href={link("/docs/writing-an-algorithm")}>Writing an algorithm</a></li>
+          <li><a href={link("/docs/cli")}>CLI &amp; YAML schema</a></li>
+        </ul>
+      </div>
+      <div class="md:col-span-2">
+        <div class="small-caps mb-3">Algorithms</div>
+        <ul class="space-y-1.5 text-[14px]">
+          <li><a href={link("/docs/algorithms/k-core-ledp")}>k-core LEDP</a></li>
+          <li><a href={link("/docs/algorithms/k-core-cdp")}>k-core CDP</a></li>
+          <li><a href={link("/docs/algorithms/triangle-ledp")}>Triangle LEDP</a></li>
+          <li><a href={link("/docs/algorithms/triangle-cdp")}>Triangle CDP</a></li>
+          <li><a href={link("/docs/algorithms/rr-baselines")}>RR baselines</a></li>
+        </ul>
+      </div>
+      <div class="md:col-span-2">
+        <div class="small-caps mb-3">Paper</div>
+        <ul class="space-y-1.5 text-[14px]">
+          <li><a href="https://doi.org/10.14778/3749646.3749687" rel="noreferrer" target="_blank">VLDB 2025</a></li>
+          <li><a href="https://arxiv.org/abs/2506.20828" rel="noreferrer" target="_blank">arXiv</a></li>
+          <li><a href="https://pkg.go.dev/github.com/WildAlg/dpgraph" rel="noreferrer" target="_blank">pkg.go.dev</a></li>
+          <li><a href="https://github.com/WildAlg/dpgraph" rel="noreferrer" target="_blank">GitHub</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="mt-10 flex flex-col gap-3 border-t pt-6 text-[12px] sm:flex-row sm:items-center sm:justify-between" style="color: var(--muted); border-color: var(--rule);">
+      <div>
+        dpgraph · MIT License · ©&nbsp;{year}
+      </div>
+      <div class="font-mono">
+        Proc. VLDB Endow. 18(11) · doi 10.14778/3749646.3749687
+      </div>
+    </div>
+  </div>
+</footer>

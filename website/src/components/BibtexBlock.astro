@@ -1,0 +1,29 @@
+---
+import CopyButton from "./CopyButton.astro";
+
+const bibtex = `@article{10.14778/3749646.3749687,
+  author     = {Mundra, Pranay and Papamanthou, Charalampos and Shun, Julian and Liu, Quanquan C.},
+  title      = {Practical and Accurate Local Edge Differentially Private Graph Algorithms},
+  year       = {2025},
+  issue_date = {July 2025},
+  publisher  = {VLDB Endowment},
+  volume     = {18},
+  number     = {11},
+  issn       = {2150-8097},
+  url        = {https://doi.org/10.14778/3749646.3749687},
+  doi        = {10.14778/3749646.3749687},
+  journal    = {Proc. VLDB Endow.},
+  month      = jul,
+  pages      = {4199--4213},
+  numpages   = {15},
+}`;
+const id = `bibtex-${Math.random().toString(36).slice(2, 9)}`;
+---
+
+<div class="rounded-md border hairline" style="border-color: var(--rule);">
+  <div class="flex items-center justify-between border-b px-4 py-2.5" style="border-color: var(--rule);">
+    <div class="small-caps">BibTeX</div>
+    <CopyButton target={`#${id}`} />
+  </div>
+  <pre id={id} class="!m-0 !rounded-t-none !border-0 !bg-transparent !p-4 text-[12.5px] leading-relaxed">{bibtex}</pre>
+</div>

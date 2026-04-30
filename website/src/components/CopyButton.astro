@@ -1,0 +1,42 @@
+---
+interface Props {
+  target: string; // CSS selector
+  label?: string;
+}
+const { target, label = "Copy" } = Astro.props;
+const id = `copy-${Math.random().toString(36).slice(2, 9)}`;
+---
+
+<button
+  type="button"
+  id={id}
+  data-copy-target={target}
+  class="copy-btn inline-flex items-center gap-1.5 rounded border hairline px-2.5 py-1 font-mono text-[11px] transition-colors hover:bg-[color:var(--code-bg)]"
+  style="border-color: var(--rule);"
+>
+  <svg viewBox="0 0 24 24" class="h-3 w-3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <rect x="9" y="9" width="11" height="11" rx="1.5" />
+    <path d="M5 15V5a1 1 0 0 1 1-1h10" />
+  </svg>
+  <span class="copy-label">{label}</span>
+</button>
+
+<script is:inline>
+  document.addEventListener("click", function (e) {
+    const t = e.target;
+    const btn = t && t.closest && t.closest(".copy-btn");
+    if (!btn) return;
+    const sel = btn.getAttribute("data-copy-target");
+    if (!sel) return;
+    const node = document.querySelector(sel);
+    if (!node) return;
+    const text = node.innerText || node.textContent || "";
+    navigator.clipboard.writeText(text).then(() => {
+      const lbl = btn.querySelector(".copy-label");
+      if (!lbl) return;
+      const prev = lbl.textContent;
+      lbl.textContent = "Copied";
+      setTimeout(() => { lbl.textContent = prev; }, 1400);
+    });
+  });
+</script>

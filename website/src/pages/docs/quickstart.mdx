@@ -1,0 +1,101 @@
+---
+layout: ../../layouts/Doc.astro
+title: Quickstart
+description: Install dpgraph and run the bundled k-core LDP example with simulated network latency.
+section: Get started
+---
+
+# Quickstart
+
+In about 60 seconds you can install `dpgraph`, run an LDP <em>k</em>-core decomposition on a 10-vertex toy graph with simulated network latency, and inspect both the per-vertex core estimates and a metrics block with message counts and bytes transferred.
+
+## 1. Install
+
+```bash
+go get github.com/WildAlg/dpgraph
+```
+
+Requires **Go 1.25+**. The module path is `github.com/WildAlg/dpgraph`.
+
+## 2. Clone and run the bundled example
+
+```bash
+git clone https://github.com/WildAlg/dpgraph
+cd dpgraph
+go run ./examples/hello_kcore
+```
+
+You should see two blocks of output. First, per-vertex core estimates:
+
+```
+=== core numbers ===
+0   2.5125
+1   2.5125
+2   2.5125
+3   2.5125
+4   1.6750
+...
+```
+
+Then the simulated-distributed metrics:
+
+```
+=== metrics ===
+{
+  "messages": 64,
+  "bytes": 1280,
+  "sim_network_ns": 32108800,
+  "phases": { ... }
+}
+```
+
+That number — `sim_network_ns` — is the framework's estimate of wall-clock network time given the configured `LatencyModel`. Concurrent worker sleeps overlap, so a round's wall time approximates `max(worker_compute + send_delay)`, matching real distributed systems where parallel sends share no critical path.
+
+## 3. What just ran
+
+`examples/hello_kcore/main.go` is the smallest possible end-to-end program:
+
+```go
+cfg := sim.Config{
+    Graph:      "toy",
+    GraphPath:  "testdata/toy_10node_adj",
+    GraphSize:  10,
+    AlgoName:   "kcoreLDP",
+    NumWorkers: 2,
+    Epsilon:    1.0,
+    Phi:        0.5,
+    Factor:     0.8,
+    Noise:      false,
+    Seed:       42,
+    Latency: sim.BandwidthRTT{
+        LinkSpeedBitsPerSec: 25e6,            // 25 Mbps
+        BaseRTT:             1 * time.Millisecond,
+    },
+}
+algo.Run(cfg)
+```
+
+The framework loads the graph, partitions it across two workers, seeds per-worker RNGs from `Cfg.Seed`, runs the registered `kcoreLDP` algorithm, applies the configured `LatencyModel` whenever a worker calls `SimulateSend` / `SimulateRecv`, and writes both the result and the sibling `.metrics.json` to `OutputDir`.
+
+## 4. Try a different algorithm
+
+Every reference algorithm in the repo registers under a name. To run k-core under the central-DP threat model instead:
+
+```diff
+- AlgoName: "kcoreLDP",
++ AlgoName: "kcoreCDP",
+```
+
+The available names are listed by the CLI:
+
+```bash
+go run ./cmd/dpgraph -config_file foo.yaml
+# usage: dpgraph -config_file <file.yaml> [-workers N] ...
+# registered algorithms: [kcoreCDP kcoreLDP rr-kcore rr-tcount triangle_countingCDP triangle_countingLDP]
+```
+
+## 5. Next steps
+
+- Read the [framework concepts](/dpgraph/docs/concepts) to understand `RunCtx`, `RunRound`, and the latency model.
+- Browse the [algorithms](/dpgraph/docs/algorithms/k-core-ledp) shipped with the library.
+- Implement your own algorithm — the [plugin contract](/dpgraph/docs/writing-an-algorithm) is four methods.

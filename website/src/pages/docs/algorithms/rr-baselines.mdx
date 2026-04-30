@@ -1,0 +1,44 @@
+---
+layout: ../../../layouts/Doc.astro
+title: RR baselines
+description: Edge randomized-response baselines for k-core (rr-kcore) and triangle counting (rr-tcount).
+section: Algorithms
+---
+
+# Randomized-response baselines <span class="badge badge-noise">RR</span>
+
+The library ships two simple edge-RR baselines so paper-equivalent comparisons are a single config change away. Both are conceptually clean and significantly less accurate than the LEDP algorithms — they exist to put the LEDP results in context.
+
+## `rr-kcore`
+
+**Package** [`github.com/WildAlg/dpgraph/algos/rrkcore`](https://pkg.go.dev/github.com/WildAlg/dpgraph/algos/rrkcore) · **Registered name** `rr-kcore`
+
+Each user perturbs their adjacency row with the standard edge-RR mechanism — flip each potential edge bit with probability $1 / (e^\varepsilon + 1)$. The curator runs an unbiased degree-rescaling and the classical heap-based peeling algorithm on the noisy graph.
+
+```go
+cfg.AlgoName = "rr-kcore"
+```
+
+The peeling algorithm is purely classical (no further DP machinery) — the only privacy step is the per-user RR. Output is a per-vertex core number derived from the noisy peeling order.
+
+## `rr-tcount`
+
+**Package** [`github.com/WildAlg/dpgraph/algos/rrtcount`](https://pkg.go.dev/github.com/WildAlg/dpgraph/algos/rrtcount) · **Registered name** `rr-tcount`
+
+After the same edge-flip RR is applied, each entry of the rescaled adjacency matrix `Y[i][j]` is the unbiased estimator of the presence of edge `(i, j)`. The triangle count estimate is the sum over all triples `(i, j, k)` of $Y_{ij} \cdot Y_{jk} \cdot Y_{ik}$.
+
+The triple loop is the work; we shard the outermost index across workers via `RunRound`.
+
+```go
+cfg.AlgoName = "rr-tcount"
+```
+
+## When to use these
+
+- As **sanity baselines** when developing a new LEDP algorithm — if your fancy method is not beating RR on a real graph, something is wrong.
+- As **headline comparison points** in your own paper. The LEDP work is most clearly motivated next to the RR baseline's poor accuracy at small ε.
+- As **the simplest non-trivial implementation example** of an algorithm using `RunRound`.
+
+## Citation
+
+The RR mechanism for graphs is due to Warner (1965); the LDP analyses of these baselines (and their accuracy gaps relative to LEDP) are discussed in §1 and §2 of *[Practical and Accurate Local Edge Differentially Private Graph Algorithms](https://doi.org/10.14778/3749646.3749687)* (Proc. VLDB Endow. 18(11), 2025).
